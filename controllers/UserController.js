@@ -1,111 +1,136 @@
 const { v4: uuidv4 } = require('uuid');
-const users = require('../data/users');
+const usersData = require('../data/users-data');
 const modifyFile = require('../utils/modifyFile');
 
-// 1ª forma que voces podem encontrar de exportar metodos do controller
+/* 1ª forma  - exporta os metodos dentro de um objeto */
 module.exports = {
-  index(req, res, next){
+  index: (req, res, next) => {
     try {
-      if (users.length === 0) {
-        res.status(200).json({
+      /* verificando se nao existem registros no arquivo users-data.js para retornar mensagem */
+      if (usersData.length === 0) {
+        return res.status(200).json({
           'message': 'No records found' 
         })
       }
 
-      res.status(200).json({
-        'users': users,
-        'total': users.length
+      /* retornando registros e quantidade total de registros encontrados no arquivo users-data.js */
+      return res.status(200).json({
+        'users': usersData,
+        'total': usersData.length
       });
     } catch (error) {
-      return res.status(400).json({ message: 'Error: ' + error.message });
+      /* retornando erro tratado */
+      return res.status(400).json({
+        'message': 'Error:' + error.message
+      });
     }
   },
 
-  save(req, res, next){
+  save: (req, res, next) => {
     try {
-      /* criando um id sequencial, obtendo a
-      quantidade de elementos no array users e somando + 1 */
+      /* criando um id randomico com uuid */
       let id = uuidv4();
   
       /* montando objeto para seguir padrao dentro do arquivo data/users.js */
       let user = { id, ...req.body };
       
       /* adcionando objeto criado dentro do array users */
-      users.push(user);
+      usersData.push(user);
   
-      // executando funcao que salva alteracoes dos registros no arquivo users.js
-      modifyFile(users, 'users.js');
+      /* executando funcao que salva alteracoes dos registros no arquivo users-data.js */
+      modifyFile(usersData, 'users-data.js');
   
-      res.status(201).json({
+      /* retornando usuario cadastrado */
+      return res.status(201).json({
         'user': user
       });
     } catch (error) {
-      return res.status(400).json({ message: 'Error: ' + error.message });
+      /* retornando erro tratado */
+      return res.status(400).json({
+        'message': 'Error:' + error.message
+      });
     }
   },
 
-  async update(req, res, next){
+  update: (req, res, next) => {
     try {    
+      /* obtendo id informado como parametro na rota */
       let id = req.params.id;
-      let { name, email, password } = req.body;
   
-      // obter a receita para altera-la
-      let user = users.find(user => user.id == id);
-  
-      if (user.length === 0) {
-        res.status(404).json({
+      /* utilizando find para encontrar usuario conforme id informado como parametro */
+      let user = usersData.find(user => user.id == id);
+
+      /* verificando se nao encontrou usuario para retornar mensagem de usuario nao encontrado */
+      if (!user) {
+        return res.status(404).json({
           'message': 'No user found'
         });
       }
 
-      // Alterar as propriedades do objeto que desejamos fazer update
-      user.name = name;
-      user.email = email;
-      user.password = password;
+      /* desestruturando propriedades recebidas no corpo da requisicao */
+      let { name, email, password } = req.body;
+      
+      /* alterar as propriedades do objeto de usuario que desejamos fazer atualizacao */
+      user.name = name ? name : user.name;
+      user.email = email ? email : user.email;
+      user.password = password ? password : user.password;
   
-      // executando funcao que salva alteracoes dos registros no arquivo users.js
-      modifyFile(users, 'users.js');
+      /* executando funcao que efetua alteracoes dos registros no arquivo users-data.js */
+      modifyFile(usersData, 'users-data.js');
   
-      res.status(200).json({
+      /* retornando usuario alterado */
+      return res.status(200).json({
         'user': user
       });
     } catch (error) {
-      return res.status(400).json({ message: 'Error: ' + error.message });
+      /* retornando erro tratado */
+      return res.status(400).json({
+        'message': 'Error:' + error.message
+      });
     }
   },
 
-  async delete(req, res, next){
+  delete(req, res, next){
     try {
+      /* obtendo id informado como parametro na rota */
       let id = req.params.id;
 
-      // forma de remover elemento do json
-      let user = users.filter(user => user.id == id);
+      /* utilizando find para encontrar usuario conforme id informado como parametro */
+      let user = usersData.find(user => user.id == id);
 
-      if (user.length === 0) {
-        res.status(404).json({
-          'message': 'No user found'
-        });
+      /* verificando se nao encontrou usuario para retornar mensagem de usuario nao encontrado */
+      if (!user) {
+          return res.status(404).json({
+              'message': 'No user found'
+          });
       }
   
-      // forma de remover elemento do json
-      let usersFilter = users.filter(user => user.id != id);
+      /* filtrando elementos que possuam id diferente do que foi informado como parametro */
+      let usersFilter = usersData.filter(user => user.id != id);
       
-      // executando funcao que salva alteracoes dos registros no arquivo users.js
-      modifyFile(usersFilter, 'users.js');
+      /* executando funcao que efetua alteracoes dos registros no arquivo users-data.js */
+      modifyFile(usersFilter, 'users-data.js');
   
-      res.status(200).json({
-        message: 'Successfully deleted user'
+      /* retornando mensagem de sucesso ao efetuar exclusao */
+      return res.status(200).json({
+        'message': 'Successfully deleted user'
       });
     } catch (error) {
-      return res.status(400).json({ message: 'Error:' + error.message });
+      /* retornando erro tratado */
+      return res.status(400).json({
+        'message': 'Error:' + error.message
+      });
     }
   }
 }
 
-// 2ª forma que voces podem encontrar de exportar metodos do controller
-// const userController = {
-//   index: (req, res, next) => {
-//   }
+/* 2ª forma - atribuindo a uma constante os metodos necessarios */
+// const UserController = {
+//     index(req, res) {
+//         return res.status(200).json({
+//             'users': []
+//         });
+//     }
 // }
 
-// module.exports = userController
+// module.exports = UserController;
